@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">FlagGame</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <!-- Main Menu -->
+    <string name="GameTitle">FLAG GAME</string>
+    <string name="playGame1Player">1 Player</string>
+    <string name="playGame2Player">2 Players</string>
+    <string name="title_activity_in_game">Flag Game</string>
+
+    <!-- InGame Activity -->
+    <string name="player1">BlueStar</string>
+    <string name="player2">RedStar</string>
+    <string name="winMessageDialogTitle"> Game Over !! </string>
+    <string name="winMessage"> win !!</string>
+    <string name="drawMessage"> Draw !!</string>
+    <string name="XturnMessage">BlueStar Turn</string>
+    <string name="YturnMessage">RedStar Turn</string>
+    <string name="title_activity_question">Let Solve Question</string>
+
+</resources>
