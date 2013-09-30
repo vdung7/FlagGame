@@ -6,9 +6,11 @@ public class Board4x4 {
 	public static final int DIMENSON = 4;
 
 	private static Cell[][] gridCell;
-
+	private boolean haveAlockedCell;
+	
 	public Board4x4() {
 		super();
+		haveAlockedCell = false;
 		gridCell = new Cell[DIMENSON][DIMENSON];
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
@@ -31,6 +33,13 @@ public class Board4x4 {
 		return SQLiteHelper.MEDIUM;
 	}
 
+	public boolean checkNoMoreMoveState(int moveCount){
+		boolean noMoreMove = moveCount==Board4x4.DIMENSON*Board4x4.DIMENSON;
+		boolean noMoreMove_withAlockedCell = moveCount== (Board4x4.DIMENSON*Board4x4.DIMENSON-1) 
+												&& isHaveAlockedCell();
+		return noMoreMove || noMoreMove_withAlockedCell;
+	}
+	
 	public boolean checkForWin(int x, int y, CellState state) {
 		// check for a horizontal line
 		for (int i = 0; i < DIMENSON; i++) {
@@ -75,6 +84,14 @@ public class Board4x4 {
 		}
 
 		return false;
+	}
+
+	public boolean isHaveAlockedCell() {
+		return haveAlockedCell;
+	}
+
+	public void setHaveAlockedCell(boolean haveAlockedCell) {
+		this.haveAlockedCell = haveAlockedCell;
 	}
 
 }

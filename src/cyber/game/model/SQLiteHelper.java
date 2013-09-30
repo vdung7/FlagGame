@@ -106,14 +106,14 @@ public class SQLiteHelper extends SQLiteOpenHelper{
 	
 	public Question getRandomQuestion(String difficult, ArrayList<Integer> exclude){
 		SQLiteDatabase sd = getReadableDatabase();
-		Cursor cursor = sd.rawQuery(
-						"SELECT * FROM "+TABLE_NAME
-						+" WHERE "+QID+">=random() % (SELECT max("+QID+") FROM "+TABLE_NAME+")"
-						+" AND "+DIFFICULT+"=\""+difficult+"\""
-						+" LIMIT 1;", null);
+		
+		String query = "";
+		query = makeQuery(difficult, exclude);
+		Cursor cursor = sd.rawQuery(query, null);
 		cursor.moveToNext();
 		
 		Question question = new Question();
+		question.setQid(cursor.getInt(cursor.getColumnIndex(QID)));
 		question.setQuestion(cursor.getString(cursor.getColumnIndex(QUESTION)));
 		question.setAnswerID(cursor.getInt(cursor.getColumnIndex(TRUE_ANSWER)));
 		String[] listChoice = new String[4];
@@ -121,11 +121,25 @@ public class SQLiteHelper extends SQLiteOpenHelper{
 		listChoice[1] = cursor.getString(cursor.getColumnIndex(ANSWER_B));
 		listChoice[2] = cursor.getString(cursor.getColumnIndex(ANSWER_C));
 		listChoice[3] = cursor.getString(cursor.getColumnIndex(ANSWER_D));
-		
 		question.setChoiceList(listChoice);
 		question.setRankScore(cursor.getString(cursor.getColumnIndex(DIFFICULT)));
 		
 		return question;
+	}
+
+	private String makeQuery(String difficult, ArrayList<Integer> exclude) {
+		String query;
+		// begin part of query 
+		query = "SELECT * FROM "+TABLE_NAME
+				+" WHERE "+QID+">=random() % (SELECT max("+QID+") FROM "+TABLE_NAME+")"
+				+" AND "+DIFFICULT+"=\""+difficult+"\"";
+		// middle part of query : for exclude 
+		for (Integer id : exclude) {
+			query += " AND "+QID+"<>"+id;
+		}
+		// end part
+		query += " LIMIT 1;";
+		return query;
 	}
 	
 	@Override

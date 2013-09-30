@@ -1,14 +1,14 @@
 package cyber.game.flaggame;
 
-import java.util.ArrayList;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.BoringLayout;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.GridView;
@@ -17,6 +17,10 @@ import android.widget.TextView;
 import cyber.game.flaggame.util.SystemUiHider;
 import cyber.game.model.Board4x4;
 import cyber.game.model.BoardAdapter;
+import cyber.game.model.Cell;
+import cyber.game.model.Cell.CellState;
+import cyber.game.model.Question;
+import cyber.game.model.SQLiteHelper;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -52,14 +56,25 @@ public class InGame extends Activity {
 	 * The instance of the {@link SystemUiHider} for this activity.
 	 */
 	private SystemUiHider mSystemUiHider;
-	
-	private GridView boardGame;
-	private Board4x4 board4x4;
+
+	public static final String DIFFICULT = "difficult";
+	public static final String ANSWER = "receive";
+	public static final int REQUEST_CODE = 1;
+	public static final int RESULT_CODE = 11;
+
+	private GridView boardGameView;
+	private Board4x4 boardGame;
 	private BoardAdapter boardAdapter;
 	private boolean turn = true;
-
+	private boolean gameover = false;
+	private int moveCount = 0;
+	private int player1score = 0;
+	private int player2score = 0;
+	
 	private ImageView ivTurn;
 	private TextView txtTurn;
+	private TextView txtScore1;
+	private TextView txtScore2;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -73,10 +88,10 @@ public class InGame extends Activity {
 		ivTurn = (ImageView) findViewById(R.id.ivTurn);
 		txtTurn = (TextView) findViewById(R.id.txtTurn);
 
-		board4x4 = new Board4x4();
-		boardAdapter = new BoardAdapter(this, getApplicationContext(), R.layout.grid_cell, board4x4);
-		boardGame = (GridView)findViewById(R.id.boardGame);
-		boardGame.setAdapter(boardAdapter);
+		boardGame = new Board4x4();
+		boardAdapter = new BoardAdapter(this, getApplicationContext(), R.layout.grid_cell, boardGame);
+		boardGameView = (GridView)findViewById(R.id.boardGame);
+		boardGameView.setAdapter(boardAdapter);
 
 		// Set up an instance of SystemUiHider to control the system UI for
 		// this activity.
@@ -140,6 +155,10 @@ public class InGame extends Activity {
 		// while interacting with the UI.
 		findViewById(R.id.dummy_button).setOnTouchListener(
 				mDelayHideTouchListener);
+		
+		// interact with UI
+		txtScore1 = (TextView) findViewById(R.id.txtScore1);
+		txtScore2 = (TextView) findViewById(R.id.txtScore2);
 	}
 
 	@Override
@@ -196,6 +215,25 @@ public class InGame extends Activity {
 		alertDialog.show();
 	}
 
+	public void showScoringMessage() {
+		final AlertDialog alertDialog = new AlertDialog.Builder(this)
+		.setTitle(R.string.dialogScoringTitle)
+		.setMessage(R.string.player1+" : "+player1score+"\n"+
+					R.string.player2+" : "+player2score)
+		.setPositiveButton("OK", new AlertDialog.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				if (player1score==player2score) {
+					showDrawMessage();
+				} else {
+					String winner = 
+							player1score>player2score? getString(R.string.player1):getString(R.string.player2);
+					showWinMessage(winner);
+				}
+			}
+		}).create();
+		alertDialog.show();
+	}
+
 	public void showDrawMessage() {
 		final AlertDialog alertDialog = new AlertDialog.Builder(this)
 		.setTitle(R.string.winMessageDialogTitle)
@@ -208,11 +246,89 @@ public class InGame extends Activity {
 		alertDialog.show();
 	}
 
-	public void updateUI(boolean turn) {
-		// update turn
-		this.turn = turn;
+	public void showWarningDialog() {
+		final AlertDialog alertDialog = new AlertDialog.Builder(this)
+		.setTitle(R.string.dialogWarning_Title)
+		.setMessage(getString(R.string.dialogWrongtimeWarning_Msg))
+		.setPositiveButton("OK", new AlertDialog.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				// nothing here ^_^
+			}
+		}).create();
+		alertDialog.show();
+	}
 
+	public boolean isGameOver(){
+		return gameover;
+	}
+
+	public void updateGameState(boolean answer) {
 		String currentPlayer = "";
+		int currentPosition = boardAdapter.getCurrentPosition();
+		Cell currentCell = boardAdapter.getItem(currentPosition);
+		
+		if(answer==true){
+			// set flag symbol for current cell
+			CellState newState = turn ? CellState.X : CellState.O;
+			currentCell.setState(newState);
+			moveCount++;
+			currentCell.setWrongTime(0);
+			
+			// get Cell Score
+			String diffcult = 
+					boardGame.getCellDifficult(currentPosition/4, currentPosition%4);
+			int cellScore;
+			if (diffcult.equals(SQLiteHelper.EASY)) {
+				cellScore = Question.EASY_SCORE;
+			} else if(diffcult.equals(SQLiteHelper.MEDIUM)) {
+				cellScore = Question.MEDIUM_SCORE;
+			} else {
+				cellScore = Question.HARD_SCORE;
+			}
+			
+			// update score (add)
+			if (turn) {
+				player1score+=cellScore;
+			}else {
+				player2score+=cellScore;
+			}
+			
+			// game is scoring when not exist cell can be click
+			if(boardGame.checkNoMoreMoveState(moveCount)){
+				gameover = true;
+				showScoringMessage();
+			}
+
+			// check who is winner or game will be continue
+			if(boardGame.checkForWin(currentPosition/4, currentPosition%4, newState)){
+				gameover = true;
+				String winner = 
+						newState==CellState.X? getString(R.string.player1):getString(R.string.player2);
+						showWinMessage(winner);
+			}
+		}else{
+			// update score (sub)
+			if (turn) {
+				player1score--;
+			}else {
+				player2score--;
+			}
+			
+			// update cell state
+			currentCell.riseWrongTime();
+			if(currentCell.getWrongTime()>=2)
+				boardGame.setHaveAlockedCell(true);
+		}
+
+		// update UI (adapter)
+		boardAdapter.notifyDataSetChanged();
+		
+		// update Score field
+		txtScore1.setText(player1score+"p");
+		txtScore2.setText(player2score+"p");
+		
+		// switch turn & update turn view
+		turn = !turn;
 		int symbolID = turn ? R.drawable.x : R.drawable.o;
 		if(turn){
 			currentPlayer = getString(R.string.player1);
@@ -220,10 +336,18 @@ public class InGame extends Activity {
 		else{
 			currentPlayer = getString(R.string.player2);
 		}
-		// update UI
 		txtTurn.setText(currentPlayer+" Turn");
 		ivTurn.setImageResource(symbolID);
 
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if(requestCode == REQUEST_CODE && resultCode == RESULT_CODE){
+			// update UI and switch turn
+			updateGameState(data.getBooleanExtra(ANSWER, false));
+		}
 	}
 
 }

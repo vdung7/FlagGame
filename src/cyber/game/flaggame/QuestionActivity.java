@@ -3,17 +3,24 @@ package cyber.game.flaggame;
 import java.util.ArrayList;
 
 import cyber.game.flaggame.util.SystemUiHider;
+import cyber.game.model.Question;
+import cyber.game.model.SQLiteHelper;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.MenuItem;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.support.v4.app.NavUtils;
 
 /**
@@ -50,14 +57,47 @@ public class QuestionActivity extends Activity {
 	 * The instance of the {@link SystemUiHider} for this activity.
 	 */
 	private SystemUiHider mSystemUiHider;
-	
+
+	// exclude list of this question activity
 	private static ArrayList<Integer> exclude = new ArrayList<Integer>();
+	// GUI component of this question activity
 	private Button choiceA;
 	private Button choiceB;
 	private Button choiceC;
 	private Button choiceD;
 	private TextView txtQuestion;
 	private TextView txtAnswer;
+	private SQLiteHelper databaseCon;
+
+	Question quest;
+	private String difficult = "";
+	private OnClickListener onClickChoice = new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			// convert choice into number for match with answerID
+			int choiceNum=0;
+			switch (v.getId()) {
+			case R.id.btnChoiceA:
+				choiceNum = 1;
+				break;
+			case R.id.btnChoiceB:
+				choiceNum = 2;
+				break;
+			case R.id.btnChoiceC:
+				choiceNum = 3;
+				break;
+			case R.id.btnChoiceD:
+				choiceNum = 4;
+				break;	
+			}
+
+			// transfer quest result to parent activity (InGame)
+			Intent intent = new Intent();
+			intent.putExtra(InGame.ANSWER, choiceNum==quest.getAnswerID());
+			setResult(InGame.RESULT_CODE, intent);
+			finish();
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -75,44 +115,44 @@ public class QuestionActivity extends Activity {
 				HIDER_FLAGS);
 		mSystemUiHider.setup();
 		mSystemUiHider
-				.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-					// Cached values.
-					int mControlsHeight;
-					int mShortAnimTime;
+		.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+			// Cached values.
+			int mControlsHeight;
+			int mShortAnimTime;
 
-					@Override
-					@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-					public void onVisibilityChange(boolean visible) {
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-							// If the ViewPropertyAnimator API is available
-							// (Honeycomb MR2 and later), use it to animate the
-							// in-layout UI controls at the bottom of the
-							// screen.
-							if (mControlsHeight == 0) {
-								mControlsHeight = controlsView.getHeight();
-							}
-							if (mShortAnimTime == 0) {
-								mShortAnimTime = getResources().getInteger(
-										android.R.integer.config_shortAnimTime);
-							}
-							controlsView
-									.animate()
-									.translationY(visible ? 0 : mControlsHeight)
-									.setDuration(mShortAnimTime);
-						} else {
-							// If the ViewPropertyAnimator APIs aren't
-							// available, simply show or hide the in-layout UI
-							// controls.
-							controlsView.setVisibility(visible ? View.VISIBLE
-									: View.GONE);
-						}
-
-						if (visible && AUTO_HIDE) {
-							// Schedule a hide().
-							delayedHide(AUTO_HIDE_DELAY_MILLIS);
-						}
+			@Override
+			@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+			public void onVisibilityChange(boolean visible) {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+					// If the ViewPropertyAnimator API is available
+					// (Honeycomb MR2 and later), use it to animate the
+					// in-layout UI controls at the bottom of the
+					// screen.
+					if (mControlsHeight == 0) {
+						mControlsHeight = controlsView.getHeight();
 					}
-				});
+					if (mShortAnimTime == 0) {
+						mShortAnimTime = getResources().getInteger(
+								android.R.integer.config_shortAnimTime);
+					}
+					controlsView
+					.animate()
+					.translationY(visible ? 0 : mControlsHeight)
+					.setDuration(mShortAnimTime);
+				} else {
+					// If the ViewPropertyAnimator APIs aren't
+					// available, simply show or hide the in-layout UI
+					// controls.
+					controlsView.setVisibility(visible ? View.VISIBLE
+							: View.GONE);
+				}
+
+				if (visible && AUTO_HIDE) {
+					// Schedule a hide().
+					delayedHide(AUTO_HIDE_DELAY_MILLIS);
+				}
+			}
+		});
 
 		// Set up the user interaction to manually show or hide the system UI.
 		contentView.setOnClickListener(new View.OnClickListener() {
@@ -126,13 +166,48 @@ public class QuestionActivity extends Activity {
 			}
 		});
 
+		// connect to database
+		databaseCon = new SQLiteHelper(this);	
+		
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
 		findViewById(R.id.dummy_button).setOnTouchListener(
 				mDelayHideTouchListener);
-		
-		// continue here
+		// interact with layout xml file
+		txtQuestion = (TextView) findViewById(R.id.txtQuestion);
+		txtAnswer = (TextView) findViewById(R.id.txtAnswer);
+		choiceA = (Button) findViewById(R.id.btnChoiceA);
+		choiceB = (Button) findViewById(R.id.btnChoiceB);
+		choiceC = (Button) findViewById(R.id.btnChoiceC);
+		choiceD = (Button) findViewById(R.id.btnChoiceD);
+
+		// get difficult from parent activity (InGame), get Question and show to UI
+		difficult = getIntent().getExtras().getString(InGame.DIFFICULT);
+		fillData();
+
+		// add onClickListener for choiceButton
+		choiceA.setOnClickListener(onClickChoice);
+		choiceB.setOnClickListener(onClickChoice);
+		choiceC.setOnClickListener(onClickChoice);
+		choiceD.setOnClickListener(onClickChoice);
+
+		// continue here ... 
+	}
+
+	private void fillData() {
+		// get question from database, and prevent this question appear again
+		quest = databaseCon.getRandomQuestion(difficult, exclude);
+		exclude.add(quest.getQid());
+
+		// show this question into UI
+		txtQuestion.setText("Q: "+quest.getQuestion());
+		txtAnswer.setText(""+quest.getAnswerID());
+		String[] choices = quest.getChoiceList(); 
+		choiceA.setText("A "+choices[0]);
+		choiceB.setText("B "+choices[1]);
+		choiceC.setText("C "+choices[2]);
+		choiceD.setText("D "+choices[3]);
 	}
 
 	@Override
@@ -205,5 +280,28 @@ public class QuestionActivity extends Activity {
 	private void delayedHide(int delayMillis) {
 		mHideHandler.removeCallbacks(mHideRunnable);
 		mHideHandler.postDelayed(mHideRunnable, delayMillis);
+	}
+
+	@Override
+	public void onBackPressed() {
+		final AlertDialog alertDialog = new AlertDialog.Builder(this)
+		.setTitle(R.string.dialogWarning_Title)
+		.setMessage(getString(R.string.dialogGiveUp_Msg))
+		.setNegativeButton("Cancel", null)
+		.setPositiveButton("OK", new AlertDialog.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				Intent intent = new Intent();
+				intent.putExtra(InGame.ANSWER, false);
+				setResult(InGame.RESULT_CODE, intent);
+				finish();
+			}
+		}).create();
+		alertDialog.show();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		databaseCon.close();
+		super.onDestroy();
 	}
 }

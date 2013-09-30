@@ -33,6 +33,46 @@
         android:layout_height="match_parent"
         android:orientation="vertical" >
 
+        <!-- Score Field -->
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#33FF66"
+            android:orientation="horizontal" >
+
+            <!-- Player 1 -->
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/x" />
+
+            <TextView
+                android:id="@+id/txtScore1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/zeroPoint"
+                android:textColor="@android:color/black" />
+
+            <!-- Player 2 -->
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/o" />
+
+            <TextView
+                android:id="@+id/txtScore2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/zeroPoint"
+                android:textColor="@android:color/black" />
+        </LinearLayout>
+
         <GridView
             android:id="@+id/boardGame"
             android:layout_width="match_parent"
@@ -45,8 +85,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:orientation="horizontal" 
-            android:background="#33FF66">
+            android:background="#33FF66"
+            android:orientation="horizontal" >
 
             <ImageView
                 android:id="@+id/ivTurn"
@@ -56,11 +96,11 @@
 
             <TextView
                 android:id="@+id/txtTurn"
-                android:textColor="@android:color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="@string/XturnMessage" />
+                android:text="@string/XturnMessage"
+                android:textColor="@android:color/black" />
         </LinearLayout>
     </LinearLayout>
 

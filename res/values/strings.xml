@@ -14,11 +14,17 @@
     <!-- InGame Activity -->
     <string name="player1">BlueStar</string>
     <string name="player2">RedStar</string>
+    <string name="dialogWarning_Title">Warning !!</string>
+    <string name="dialogWrongtimeWarning_Msg">This cell is locked!</string>
     <string name="winMessageDialogTitle"> Game Over !! </string>
     <string name="winMessage"> win !!</string>
     <string name="drawMessage"> Draw !!</string>
     <string name="XturnMessage">BlueStar Turn</string>
     <string name="YturnMessage">RedStar Turn</string>
     <string name="title_activity_question">Let Solve Question</string>
-
+	<string name="dialogScoringTitle">Score</string>
+	<string name="zeroPoint">0p</string>
+    
+    <!-- Question Activity -->
+    <string name="dialogGiveUp_Msg">Give Up?</string>
 </resources>

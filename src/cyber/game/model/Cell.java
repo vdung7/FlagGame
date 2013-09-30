@@ -22,6 +22,9 @@ public class Cell {
 	public void setWrongTime(int wrongTime) {
 		this.wrongTime = wrongTime;
 	}
+	public void riseWrongTime(){
+		this.wrongTime++;
+	}
 	@Override
 	public String toString() {
 		return "Cell [state=" + state + ", wrongTime=" + wrongTime + "]";

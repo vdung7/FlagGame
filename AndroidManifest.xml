@@ -38,6 +38,7 @@
         <activity
             android:name="cyber.game.flaggame.QuestionActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="portrait"
             android:label="@string/title_activity_question"
             android:parentActivityName="cyber.game.flaggame.InGame"
             android:theme="@style/FullscreenTheme" >
