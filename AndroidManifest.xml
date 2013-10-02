@@ -3,7 +3,7 @@
     package="cyber.game.flaggame"
     android:versionCode="1"
     android:versionName="1.0" >
-	
+
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="17" />
@@ -29,6 +29,7 @@
             android:name="cyber.game.flaggame.InGame"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_in_game"
+            android:parentActivityName="cyber.game.flaggame.InGame"
             android:screenOrientation="portrait"
             android:theme="@style/FullscreenTheme" >
             <meta-data
@@ -38,9 +39,9 @@
         <activity
             android:name="cyber.game.flaggame.QuestionActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:screenOrientation="portrait"
             android:label="@string/title_activity_question"
             android:parentActivityName="cyber.game.flaggame.InGame"
+            android:screenOrientation="portrait"
             android:theme="@style/FullscreenTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

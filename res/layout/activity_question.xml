@@ -21,102 +21,116 @@
         android:textSize="50sp"
         android:textStyle="bold" />
 
-    <ScrollView
-        android:id="@+id/scrollDetail"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:fillViewport="true"
-        android:padding="1dp" >
+        android:orientation="vertical" >
 
-        <TableLayout
+        <TextView
+            android:id="@+id/txtRemainingTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:stretchColumns="1" >
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp" />
 
-            <!-- Question row -->
+        <ScrollView
+            android:id="@+id/scrollDetail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" >
 
-            <TableRow>
+            <TableLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:stretchColumns="1" >
 
-                <TextView
-                    android:id="@+id/txtQuestion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="0"
-                    android:layout_span="4"
-                    android:textColor="#FF0000"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </TableRow>
+                <!-- Question row -->
 
-            <View
-                android:layout_height="2dp"
-                android:layout_marginBottom="5dip"
-                android:layout_marginTop="5dip"
-                android:background="#DDFFDD" />
+                <TableRow>
 
-            <!-- choise: A and B -->
+                    <TextView
+                        android:id="@+id/txtQuestion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="0"
+                        android:layout_span="4"
+                        android:textColor="#FF0000"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </TableRow>
 
-            <TableRow>
+                <View
+                    android:layout_height="2dp"
+                    android:layout_marginBottom="5dip"
+                    android:layout_marginTop="5dip"
+                    android:background="#DDFFDD" />
 
-                <Button
-                    android:id="@+id/btnChoiceA"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="0"
-                    android:textColor="#000000" />
+                <!-- choise: A and B -->
 
-                <Button
-                    android:id="@+id/btnChoiceB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="2"
-                    android:textColor="#000000" />
-            </TableRow>
+                <TableRow>
 
-            <!-- choise: C and D -->
+                    <Button
+                        android:id="@+id/btnChoiceA"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="0"
+                        android:textColor="#000000" />
 
-            <TableRow>
+                    <Button
+                        android:id="@+id/btnChoiceB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="2"
+                        android:textColor="#000000" />
+                </TableRow>
 
-                <Button
-                    android:id="@+id/btnChoiceC"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="0"
-                    android:textColor="#000000" />
+                <!-- choise: C and D -->
 
-                <Button
-                    android:id="@+id/btnChoiceD"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="2"
-                    android:textColor="#000000" />
-            </TableRow>
+                <TableRow>
 
-            <View
-                android:layout_height="2dp"
-                android:layout_marginBottom="5dip"
-                android:layout_marginTop="5dip"
-                android:background="#DDFFDD" />
+                    <Button
+                        android:id="@+id/btnChoiceC"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="0"
+                        android:textColor="#000000" />
 
-            <!-- True Answer -->
+                    <Button
+                        android:id="@+id/btnChoiceD"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="2"
+                        android:textColor="#000000" />
+                </TableRow>
 
-            <TableRow>
+                <View
+                    android:layout_height="2dp"
+                    android:layout_marginBottom="5dip"
+                    android:layout_marginTop="5dip"
+                    android:background="#DDFFDD" />
 
-                <TextView
-                    android:id="@+id/txtAnswer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="0"
-                    android:layout_span="4"
-                    android:textColor="#FF0000"
-                    android:layout_gravity="center"
-                    android:textSize="16sp"
-                    android:textStyle="italic" />
-            </TableRow>
-        </TableLayout>
-    </ScrollView>
+                <!-- True Answer -->
+
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/txtAnswer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="0"
+                        android:layout_gravity="center"
+                        android:layout_span="4"
+                        android:textColor="#FF0000"
+                        android:textSize="16sp"
+                        android:textStyle="italic" />
+                </TableRow>
+            </TableLayout>
+        </ScrollView>
+    </LinearLayout>
 
     <!--
          This FrameLayout insets its children based on system windows using

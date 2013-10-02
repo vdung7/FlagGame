@@ -2,26 +2,24 @@ package cyber.game.flaggame;
 
 import java.util.ArrayList;
 
-import cyber.game.flaggame.util.SystemUiHider;
-import cyber.game.model.Question;
-import cyber.game.model.SQLiteHelper;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.MenuItem;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.support.v4.app.NavUtils;
+import cyber.game.flaggame.util.SystemUiHider;
+import cyber.game.model.Question;
+import cyber.game.model.SQLiteHelper;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -67,9 +65,18 @@ public class QuestionActivity extends Activity {
 	private Button choiceD;
 	private TextView txtQuestion;
 	private TextView txtAnswer;
+	private TextView txtRemainingTime;
+	
 	private SQLiteHelper databaseCon;
 
+	// CountDownTimer
+	private CountDownTimer countDownTimer;
+	private static final long STARTTIME = 1 * 60 * 1000;
+	private static final long INTERVAL = 1 * 1000;
+
+	// Quest System
 	Question quest;
+	private static final int WRONG_CHOICE = 0;
 	private String difficult = "";
 	private OnClickListener onClickChoice = new OnClickListener() {
 		@Override
@@ -91,11 +98,7 @@ public class QuestionActivity extends Activity {
 				break;	
 			}
 
-			// transfer quest result to parent activity (InGame)
-			Intent intent = new Intent();
-			intent.putExtra(InGame.ANSWER, choiceNum==quest.getAnswerID());
-			setResult(InGame.RESULT_CODE, intent);
-			finish();
+			sendResultBack(choiceNum);
 		}
 	};
 
@@ -104,7 +107,6 @@ public class QuestionActivity extends Activity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_question);
-		setupActionBar();
 
 		final View controlsView = findViewById(R.id.fullscreen_content_controls);
 		final View contentView = findViewById(R.id.fullscreen_content);
@@ -168,7 +170,7 @@ public class QuestionActivity extends Activity {
 
 		// connect to database
 		databaseCon = new SQLiteHelper(this);	
-		
+
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
@@ -177,6 +179,8 @@ public class QuestionActivity extends Activity {
 		// interact with layout xml file
 		txtQuestion = (TextView) findViewById(R.id.txtQuestion);
 		txtAnswer = (TextView) findViewById(R.id.txtAnswer);
+		txtRemainingTime = (TextView) findViewById(R.id.txtRemainingTime);
+		
 		choiceA = (Button) findViewById(R.id.btnChoiceA);
 		choiceB = (Button) findViewById(R.id.btnChoiceB);
 		choiceC = (Button) findViewById(R.id.btnChoiceC);
@@ -192,6 +196,8 @@ public class QuestionActivity extends Activity {
 		choiceC.setOnClickListener(onClickChoice);
 		choiceD.setOnClickListener(onClickChoice);
 
+		countDownTimer = new MyCountDownTimer(STARTTIME, INTERVAL);
+		countDownTimer.start();
 		// continue here ... 
 	}
 
@@ -210,6 +216,27 @@ public class QuestionActivity extends Activity {
 		choiceD.setText("D "+choices[3]);
 	}
 
+	private void sendResultBack(int choiceNum) {
+		// transfer quest result to parent activity (InGame)
+		Intent intent = new Intent();
+		if (choiceNum==WRONG_CHOICE) {
+			intent.putExtra(InGame.ANSWER, false);
+		}else {
+			intent.putExtra(InGame.ANSWER, choiceNum==quest.getAnswerID());
+		}
+		setResult(InGame.RESULT_CODE, intent);
+		finish();
+	}
+
+	private void setRemainingTimeUI(long millisUntilFinished) {
+		long secUntilFinished = millisUntilFinished/1000;
+		long minute = secUntilFinished/60;
+		long sec = secUntilFinished%60;
+		
+		txtRemainingTime.setTextColor(secUntilFinished<10?Color.RED:Color.WHITE);
+		txtRemainingTime.setText(minute+" : "+sec);
+	}
+	
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -218,36 +245,6 @@ public class QuestionActivity extends Activity {
 		// created, to briefly hint to the user that UI controls
 		// are available.
 		delayedHide(100);
-	}
-
-	/**
-	 * Set up the {@link android.app.ActionBar}, if the API is available.
-	 */
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	private void setupActionBar() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			// Show the Up button in the action bar.
-			getActionBar().setDisplayHomeAsUpEnabled(true);
-		}
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			// This ID represents the Home or Up button. In the case of this
-			// activity, the Up button is shown. Use NavUtils to allow users
-			// to navigate up one level in the application structure. For
-			// more details, see the Navigation pattern on Android Design:
-			//
-			// http://developer.android.com/design/patterns/navigation.html#up-vs-back
-			//
-			// TODO: If Settings has multiple levels, Up should navigate up
-			// that hierarchy.
-			NavUtils.navigateUpFromSameTask(this);
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
 	}
 
 	/**
@@ -290,18 +287,33 @@ public class QuestionActivity extends Activity {
 		.setNegativeButton("Cancel", null)
 		.setPositiveButton("OK", new AlertDialog.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
-				Intent intent = new Intent();
-				intent.putExtra(InGame.ANSWER, false);
-				setResult(InGame.RESULT_CODE, intent);
-				finish();
+				sendResultBack(WRONG_CHOICE);
 			}
 		}).create();
 		alertDialog.show();
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		databaseCon.close();
 		super.onDestroy();
+	}
+
+	// CountDownTimer for this Question
+	public class MyCountDownTimer extends CountDownTimer {
+		public MyCountDownTimer(long startTime, long interval) {
+			super(startTime, interval);
+		}
+
+		@Override
+		public void onFinish() {
+			txtRemainingTime.setText(getString(R.string.timeUpWarning));
+			sendResultBack(WRONG_CHOICE);
+		}
+
+		@Override
+		public void onTick(long millisUntilFinished) {
+			setRemainingTimeUI(millisUntilFinished);
+		}
 	}
 }

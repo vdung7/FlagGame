@@ -27,4 +27,5 @@
     
     <!-- Question Activity -->
     <string name="dialogGiveUp_Msg">Give Up?</string>
+    <string name="timeUpWarning">Time\'s up!</string>
 </resources>

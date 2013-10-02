@@ -8,7 +8,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.NavUtils;
 import android.text.BoringLayout;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.GridView;
@@ -87,7 +89,8 @@ public class InGame extends Activity {
 
 		ivTurn = (ImageView) findViewById(R.id.ivTurn);
 		txtTurn = (TextView) findViewById(R.id.txtTurn);
-
+		
+		// Set up a 4x4 Board Game
 		boardGame = new Board4x4();
 		boardAdapter = new BoardAdapter(this, getApplicationContext(), R.layout.grid_cell, boardGame);
 		boardGameView = (GridView)findViewById(R.id.boardGame);
@@ -202,7 +205,7 @@ public class InGame extends Activity {
 		mHideHandler.removeCallbacks(mHideRunnable);
 		mHideHandler.postDelayed(mHideRunnable, delayMillis);
 	}
-
+	
 	public void showWinMessage(String winner) {
 		final AlertDialog alertDialog = new AlertDialog.Builder(this)
 		.setTitle(R.string.winMessageDialogTitle)
@@ -349,5 +352,10 @@ public class InGame extends Activity {
 			updateGameState(data.getBooleanExtra(ANSWER, false));
 		}
 	}
-
+	
+	@Override
+	public void onBackPressed() {
+		showScoringMessage();
+	}
+	
 }
