@@ -16,7 +16,7 @@
     <string name="player2">RedStar</string>
     <string name="dialogWarning_Title">Warning !!</string>
     <string name="dialogWrongtimeWarning_Msg">This cell is locked!</string>
-    <string name="winMessageDialogTitle"> Game Over !! </string>
+    <string name="winMessageDialogTitle">Game Over !!</string>
     <string name="winMessage"> win !!</string>
     <string name="drawMessage"> Draw !!</string>
     <string name="XturnMessage">BlueStar Turn</string>

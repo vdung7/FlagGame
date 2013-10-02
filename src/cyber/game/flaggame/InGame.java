@@ -69,10 +69,11 @@ public class InGame extends Activity {
 	private BoardAdapter boardAdapter;
 	private boolean turn = true;
 	private boolean gameover = false;
+	private boolean isAnswering = false;
 	private int moveCount = 0;
 	private int player1score = 0;
 	private int player2score = 0;
-	
+
 	private ImageView ivTurn;
 	private TextView txtTurn;
 	private TextView txtScore1;
@@ -89,7 +90,7 @@ public class InGame extends Activity {
 
 		ivTurn = (ImageView) findViewById(R.id.ivTurn);
 		txtTurn = (TextView) findViewById(R.id.txtTurn);
-		
+
 		// Set up a 4x4 Board Game
 		boardGame = new Board4x4();
 		boardAdapter = new BoardAdapter(this, getApplicationContext(), R.layout.grid_cell, boardGame);
@@ -158,7 +159,7 @@ public class InGame extends Activity {
 		// while interacting with the UI.
 		findViewById(R.id.dummy_button).setOnTouchListener(
 				mDelayHideTouchListener);
-		
+
 		// interact with UI
 		txtScore1 = (TextView) findViewById(R.id.txtScore1);
 		txtScore2 = (TextView) findViewById(R.id.txtScore2);
@@ -205,7 +206,7 @@ public class InGame extends Activity {
 		mHideHandler.removeCallbacks(mHideRunnable);
 		mHideHandler.postDelayed(mHideRunnable, delayMillis);
 	}
-	
+
 	public void showWinMessage(String winner) {
 		final AlertDialog alertDialog = new AlertDialog.Builder(this)
 		.setTitle(R.string.winMessageDialogTitle)
@@ -221,19 +222,19 @@ public class InGame extends Activity {
 	public void showScoringMessage() {
 		final AlertDialog alertDialog = new AlertDialog.Builder(this)
 		.setTitle(R.string.dialogScoringTitle)
-		.setMessage(R.string.player1+" : "+player1score+"\n"+
-					R.string.player2+" : "+player2score)
-		.setPositiveButton("OK", new AlertDialog.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				if (player1score==player2score) {
-					showDrawMessage();
-				} else {
-					String winner = 
-							player1score>player2score? getString(R.string.player1):getString(R.string.player2);
-					showWinMessage(winner);
-				}
-			}
-		}).create();
+		.setMessage(getString(R.string.player1)+" : "+player1score+"\n"+
+				getString(R.string.player2)+" : "+player2score)
+				.setPositiveButton("OK", new AlertDialog.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						if (player1score==player2score) {
+							showDrawMessage();
+						} else {
+							String winner = 
+									player1score>player2score? getString(R.string.player1):getString(R.string.player2);
+									showWinMessage(winner);
+						}
+					}
+				}).create();
 		alertDialog.show();
 	}
 
@@ -255,28 +256,41 @@ public class InGame extends Activity {
 		.setMessage(getString(R.string.dialogWrongtimeWarning_Msg))
 		.setPositiveButton("OK", new AlertDialog.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
-				// nothing here ^_^
+				// nothing to do here ^_^
 			}
 		}).create();
 		alertDialog.show();
+	}
+
+	public void setGameOver(boolean gameover){
+		this.gameover = gameover;
+		txtTurn.setText(getString(R.string.winMessageDialogTitle));
+		ivTurn.setImageResource(android.R.drawable.btn_star_big_off);
 	}
 
 	public boolean isGameOver(){
 		return gameover;
 	}
 
+	public boolean isAnswering() {
+		return isAnswering;
+	}
+
+	public void setAnswering(boolean isAnswering) {
+		this.isAnswering = isAnswering;
+	}
+
 	public void updateGameState(boolean answer) {
-		String currentPlayer = "";
 		int currentPosition = boardAdapter.getCurrentPosition();
 		Cell currentCell = boardAdapter.getItem(currentPosition);
-		
+
 		if(answer==true){
 			// set flag symbol for current cell
 			CellState newState = turn ? CellState.X : CellState.O;
 			currentCell.setState(newState);
 			moveCount++;
 			currentCell.setWrongTime(0);
-			
+
 			// get Cell Score
 			String diffcult = 
 					boardGame.getCellDifficult(currentPosition/4, currentPosition%4);
@@ -288,26 +302,26 @@ public class InGame extends Activity {
 			} else {
 				cellScore = Question.HARD_SCORE;
 			}
-			
+
 			// update score (add)
 			if (turn) {
 				player1score+=cellScore;
 			}else {
 				player2score+=cellScore;
 			}
-			
+
+			// check end game state :
 			// game is scoring when not exist cell can be click
 			if(boardGame.checkNoMoreMoveState(moveCount)){
-				gameover = true;
+				setGameOver(true);
 				showScoringMessage();
 			}
-
 			// check who is winner or game will be continue
 			if(boardGame.checkForWin(currentPosition/4, currentPosition%4, newState)){
-				gameover = true;
+				setGameOver(true);
 				String winner = 
 						newState==CellState.X? getString(R.string.player1):getString(R.string.player2);
-						showWinMessage(winner);
+				showWinMessage(winner);
 			}
 		}else{
 			// update score (sub)
@@ -316,20 +330,28 @@ public class InGame extends Activity {
 			}else {
 				player2score--;
 			}
-			
+
 			// update cell state
 			currentCell.riseWrongTime();
 			if(currentCell.getWrongTime()>=2)
 				boardGame.setHaveAlockedCell(true);
 		}
 
-		// update UI (adapter)
+		// update adapter UI
 		boardAdapter.notifyDataSetChanged();
-		
+
 		// update Score field
 		txtScore1.setText(player1score+"p");
 		txtScore2.setText(player2score+"p");
-		
+
+		if (!isGameOver()) {
+			switchTurn();
+		}
+
+	}
+
+	private void switchTurn() {
+		String currentPlayer;
 		// switch turn & update turn view
 		turn = !turn;
 		int symbolID = turn ? R.drawable.x : R.drawable.o;
@@ -341,21 +363,26 @@ public class InGame extends Activity {
 		}
 		txtTurn.setText(currentPlayer+" Turn");
 		ivTurn.setImageResource(symbolID);
-
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if(requestCode == REQUEST_CODE && resultCode == RESULT_CODE){
+			setAnswering(false);
 			// update UI and switch turn
 			updateGameState(data.getBooleanExtra(ANSWER, false));
 		}
 	}
-	
+
 	@Override
 	public void onBackPressed() {
-		showScoringMessage();
+		if(!isGameOver()){
+			setGameOver(true);
+			showScoringMessage();
+		}else {
+			super.onBackPressed();
+		}
 	}
-	
+
 }

@@ -81,12 +81,14 @@ public class BoardAdapter extends BaseAdapter{
 			public void onClick(View arg0) {
 				currentPosition = position;
 				Cell currentCell = getItem(currentPosition);
-				if (currentCell.getState()==CellState.Blank && !mainAct.isGameOver()) {
+				if (!mainAct.isGameOver() && !mainAct.isAnswering() 
+						&& currentCell.getState()==CellState.Blank) {
 					if (currentCell.getWrongTime() >= 2) {
 						mainAct.showWarningDialog();
 					} else {
 						clearLockedCell();
 						// start Activity for player solve question
+						mainAct.setAnswering(true);
 						Intent intent = new Intent(mainAct,
 								QuestionActivity.class);
 						intent.putExtra(InGame.DIFFICULT, difficult);
@@ -109,10 +111,6 @@ public class BoardAdapter extends BaseAdapter{
 		return convertView;
 	}
 
-	public void updateAdapter() {
-		// this function will be build later
-	}
-
 	@Override
 	public int getCount() {
 		return Board4x4.DIMENSON*Board4x4.DIMENSON;
@@ -125,7 +123,7 @@ public class BoardAdapter extends BaseAdapter{
 
 	@Override
 	public long getItemId(int position) {
-		return 0;
+		return position;
 	}
 
 	public int getCurrentPosition(){
