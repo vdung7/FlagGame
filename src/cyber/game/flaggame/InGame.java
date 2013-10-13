@@ -1,5 +1,6 @@
 package cyber.game.flaggame;
 
+import android.R.bool;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,6 +9,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.SyncStateContract.Helpers;
 import android.support.v4.app.NavUtils;
 import android.text.BoringLayout;
 import android.view.MenuItem;
@@ -16,6 +18,7 @@ import android.view.View;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import cyber.game.flaggame.util.SystemUiHider;
 import cyber.game.model.Board4x4;
 import cyber.game.model.BoardAdapter;
@@ -60,7 +63,8 @@ public class InGame extends Activity {
 	private SystemUiHider mSystemUiHider;
 
 	public static final String DIFFICULT = "difficult";
-	public static final String ANSWER = "receive";
+	public static final String ANSWER = "receive_answer";
+	public static final String QUEST = "receive_quest";
 	public static final int REQUEST_CODE = 1;
 	public static final int RESULT_CODE = 11;
 
@@ -73,11 +77,17 @@ public class InGame extends Activity {
 	private int moveCount = 0;
 	private int player1score = 0;
 	private int player2score = 0;
+	private int hardRemain = 0;
+	private int mediumRemain = 0;
+	private int easyRemain = 0;
 
 	private ImageView ivTurn;
 	private TextView txtTurn;
 	private TextView txtScore1;
 	private TextView txtScore2;
+	private TextView txtHardRemain;
+	private TextView txtMediumRemain;
+	private TextView txtEasyRemain;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +106,7 @@ public class InGame extends Activity {
 		boardAdapter = new BoardAdapter(this, getApplicationContext(), R.layout.grid_cell, boardGame);
 		boardGameView = (GridView)findViewById(R.id.boardGame);
 		boardGameView.setAdapter(boardAdapter);
+		QuestionActivity.initExcludeList();
 
 		// Set up an instance of SystemUiHider to control the system UI for
 		// this activity.
@@ -163,8 +174,40 @@ public class InGame extends Activity {
 		// interact with UI
 		txtScore1 = (TextView) findViewById(R.id.txtScore1);
 		txtScore2 = (TextView) findViewById(R.id.txtScore2);
+		txtHardRemain = (TextView) findViewById(R.id.txtHardRemain);
+		txtMediumRemain = (TextView) findViewById(R.id.txtMediumRemain);
+		txtEasyRemain = (TextView) findViewById(R.id.txtEasyRemain);
+		
+		initRemainFields();
 	}
 
+	private void initRemainFields() {
+		// initialize Remain Fields
+		SQLiteHelper helper = new SQLiteHelper(this);
+		hardRemain = helper.getNumberOfQuestions(SQLiteHelper.HARD);
+		mediumRemain = helper.getNumberOfQuestions(SQLiteHelper.MEDIUM);
+		easyRemain = helper.getNumberOfQuestions(SQLiteHelper.EASY);
+		updateRemainFields();
+	}
+
+	private void updateRemainFields() {
+		txtHardRemain.setText(" "+hardRemain+"-");
+		txtMediumRemain.setText(" "+mediumRemain+"-");
+		txtEasyRemain.setText(" "+easyRemain+"-");
+	}
+
+
+	private void updateNumberOfRemain(String qDifficult) {
+		if (qDifficult.equals(SQLiteHelper.EASY)) {
+			easyRemain--;
+		} else if(qDifficult.equals(SQLiteHelper.MEDIUM)) {
+			mediumRemain--;
+		} else {
+			hardRemain--;
+		}
+	}
+
+	
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -283,7 +326,13 @@ public class InGame extends Activity {
 	public void updateGameState(boolean answer) {
 		int currentPosition = boardAdapter.getCurrentPosition();
 		Cell currentCell = boardAdapter.getItem(currentPosition);
-
+		String difficult = 
+				boardGame.getCellDifficult(currentPosition/4, currentPosition%4);
+		
+		// update Remain Fields 
+		updateNumberOfRemain(difficult);
+		updateRemainFields();
+		
 		if(answer==true){
 			// set flag symbol for current cell
 			CellState newState = turn ? CellState.X : CellState.O;
@@ -292,12 +341,10 @@ public class InGame extends Activity {
 			currentCell.setWrongTime(0);
 
 			// get Cell Score
-			String diffcult = 
-					boardGame.getCellDifficult(currentPosition/4, currentPosition%4);
 			int cellScore;
-			if (diffcult.equals(SQLiteHelper.EASY)) {
+			if (difficult.equals(SQLiteHelper.EASY)) {
 				cellScore = Question.EASY_SCORE;
-			} else if(diffcult.equals(SQLiteHelper.MEDIUM)) {
+			} else if(difficult.equals(SQLiteHelper.MEDIUM)) {
 				cellScore = Question.MEDIUM_SCORE;
 			} else {
 				cellScore = Question.HARD_SCORE;
@@ -310,20 +357,15 @@ public class InGame extends Activity {
 				player2score+=cellScore;
 			}
 
-			// check end game state :
-			// game is scoring when not exist cell can be click
-			if(boardGame.checkNoMoreMoveState(moveCount)){
-				setGameOver(true);
-				showScoringMessage();
-			}
+			// check 4-line state (end-game state)
 			// check who is winner or game will be continue
 			if(boardGame.checkForWin(currentPosition/4, currentPosition%4, newState)){
 				setGameOver(true);
 				String winner = 
 						newState==CellState.X? getString(R.string.player1):getString(R.string.player2);
-				showWinMessage(winner);
+						showWinMessage(winner);
 			}
-		}else{
+		} else{
 			// update score (sub)
 			if (turn) {
 				player1score--;
@@ -343,6 +385,13 @@ public class InGame extends Activity {
 		// update Score field
 		txtScore1.setText(player1score+"p");
 		txtScore2.setText(player2score+"p");
+
+		// check No More Move state (end-game state)
+		// game is scoring when not exist cell can be click
+		if(boardGame.checkNoMoreMoveState(moveCount)){
+			setGameOver(true);
+			showScoringMessage();
+		}
 
 		if (!isGameOver()) {
 			switchTurn();
@@ -371,7 +420,15 @@ public class InGame extends Activity {
 		if(requestCode == REQUEST_CODE && resultCode == RESULT_CODE){
 			setAnswering(false);
 			// update UI and switch turn
-			updateGameState(data.getBooleanExtra(ANSWER, false));
+			int qid = data.getExtras().getInt(QUEST);
+			boolean answerTrue = data.getExtras().getBoolean(ANSWER);
+			if ( qid == QuestionActivity.RUNOUT_OF_QUESTION) {
+				Toast.makeText(this, "Run out of Question. Game Over!", Toast.LENGTH_LONG).show();
+				setGameOver(true);
+				showScoringMessage();
+			} else {
+				updateGameState(answerTrue);
+			}
 		}
 	}
 

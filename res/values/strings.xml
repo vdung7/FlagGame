@@ -22,10 +22,16 @@
     <string name="XturnMessage">BlueStar Turn</string>
     <string name="YturnMessage">RedStar Turn</string>
     <string name="title_activity_question">Let Solve Question</string>
-	<string name="dialogScoringTitle">Score</string>
-	<string name="zeroPoint">0p</string>
-    
+    <string name="dialogScoringTitle">Score</string>
+    <string name="zeroPoint">0p</string>
+    <string name="txtRemainTitle">Questions Remain:</string>
+    <string name="txtHardSymbol">Hard</string>
+    <string name="txtMediumSymbol">Medium</string>
+    <string name="txtEasySymbol">Easy</string>
+
     <!-- Question Activity -->
     <string name="dialogGiveUp_Msg">Give Up?</string>
     <string name="timeUpWarning">Time\'s up!</string>
+    <string name="showAnswer">Show Answer</string>
+
 </resources>

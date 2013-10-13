@@ -14,6 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.Toast;
 
 public class SQLiteHelper extends SQLiteOpenHelper{
 	private static final String DATABASE_PATH = "/data/data/cyber.game.flaggame/databases/";
@@ -37,9 +38,9 @@ public class SQLiteHelper extends SQLiteOpenHelper{
 	public static final String EASY = "easy";
 	public static final String MEDIUM = "medium";
 	public static final String HARD = "hard";
-	
+
 	public static final int MAX_QUESTION = 200;
-	
+
 	public SQLiteHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		myContext= context;
@@ -89,7 +90,7 @@ public class SQLiteHelper extends SQLiteOpenHelper{
 		myOutput.close();
 		myInput.close();
 	}
-	
+
 	public void createDataBase() {
 		boolean dbExist = checkDataBase(); 
 
@@ -103,27 +104,47 @@ public class SQLiteHelper extends SQLiteOpenHelper{
 			}
 		}
 	}  
+
+	public int getNumberOfQuestions(String difficult){
+		SQLiteDatabase sd = getReadableDatabase();
+
+		String query = "select count(*) from "+TABLE_NAME+
+						" where "+DIFFICULT+"=\'"+difficult+"\';";
+		Cursor cursor = sd.rawQuery(query, null);
+		cursor.moveToNext();
+		int n = cursor.getInt(0);
+		return n;
+	}
 	
 	public Question getRandomQuestion(String difficult, ArrayList<Integer> exclude){
 		SQLiteDatabase sd = getReadableDatabase();
-		
+
 		String query = "";
 		query = makeQuery(difficult, exclude);
+		System.out.println(query);
 		Cursor cursor = sd.rawQuery(query, null);
-		cursor.moveToNext();
-		
 		Question question = new Question();
-		question.setQid(cursor.getInt(cursor.getColumnIndex(QID)));
-		question.setQuestion(cursor.getString(cursor.getColumnIndex(QUESTION)));
-		question.setAnswerID(cursor.getInt(cursor.getColumnIndex(TRUE_ANSWER)));
-		String[] listChoice = new String[4];
-		listChoice[0] = cursor.getString(cursor.getColumnIndex(ANSWER_A));
-		listChoice[1] = cursor.getString(cursor.getColumnIndex(ANSWER_B));
-		listChoice[2] = cursor.getString(cursor.getColumnIndex(ANSWER_C));
-		listChoice[3] = cursor.getString(cursor.getColumnIndex(ANSWER_D));
-		question.setChoiceList(listChoice);
-		question.setRankScore(cursor.getString(cursor.getColumnIndex(DIFFICULT)));
+		int nrows = cursor.getCount();
 		
+		// test
+		System.out.println("row = "+nrows);
+		
+		if (nrows>0) {
+			cursor.moveToNext();
+			question.setQid(cursor.getInt(cursor.getColumnIndex(QID)));
+			question.setQuestion(cursor.getString(cursor
+					.getColumnIndex(QUESTION)));
+			question.setAnswerID(cursor.getInt(cursor
+					.getColumnIndex(TRUE_ANSWER)));
+			String[] listChoice = new String[4];
+			listChoice[0] = cursor.getString(cursor.getColumnIndex(ANSWER_A));
+			listChoice[1] = cursor.getString(cursor.getColumnIndex(ANSWER_B));
+			listChoice[2] = cursor.getString(cursor.getColumnIndex(ANSWER_C));
+			listChoice[3] = cursor.getString(cursor.getColumnIndex(ANSWER_D));
+			question.setChoiceList(listChoice);
+			question.setRankScore(cursor.getString(cursor
+					.getColumnIndex(DIFFICULT)));
+		}
 		return question;
 	}
 
@@ -131,17 +152,16 @@ public class SQLiteHelper extends SQLiteOpenHelper{
 		String query;
 		// begin part of query 
 		query = "SELECT * FROM "+TABLE_NAME
-				+" WHERE "+QID+">=random() % (SELECT max("+QID+") FROM "+TABLE_NAME+")"
-				+" AND "+DIFFICULT+"=\""+difficult+"\"";
+				+" WHERE "+DIFFICULT+"=\'"+difficult+"\'";
 		// middle part of query : for exclude 
 		for (Integer id : exclude) {
 			query += " AND "+QID+"<>"+id;
 		}
 		// end part
-		query += " LIMIT 1;";
+		query += " ORDER BY RANDOM() LIMIT 1;";
 		return query;
 	}
-	
+
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 	}

@@ -12,6 +12,7 @@ public class Question {
 	public static final int EASY_SCORE = 5;
 	public static final int MEDIUM_SCORE = 10;
 	public static final int HARD_SCORE = 15;
+	public static final int BLANK_QUESTION = 0;
 
 	public Question(int qid, String question, String[] choiceList, int answerID,
 			int rankScore) {
@@ -22,7 +23,7 @@ public class Question {
 		this.rankScore = rankScore;
 	}
 	public Question() {
-		this(0, "", new String[4], 0, 0);
+		this(BLANK_QUESTION, "", new String[] {"","","",""}, 0, 0);
 	}
 
 	public String getQuestion() {

@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import cyber.game.flaggame.util.SystemUiHider;
 import cyber.game.model.Question;
 import cyber.game.model.SQLiteHelper;
@@ -66,17 +67,19 @@ public class QuestionActivity extends Activity {
 	private TextView txtQuestion;
 	private TextView txtAnswer;
 	private TextView txtRemainingTime;
+	private Button btnShowTrueAnswer;
 	
 	private SQLiteHelper databaseCon;
 
 	// CountDownTimer
 	private CountDownTimer countDownTimer;
-	private static final long STARTTIME = 1 * 60 * 1000;
+	private static final long STARTTIME = 45 * 1000;
 	private static final long INTERVAL = 1 * 1000;
 
 	// Quest System
 	Question quest;
-	private static final int WRONG_CHOICE = 0;
+	public static final int WRONG_CHOICE = 0;
+	public static final int RUNOUT_OF_QUESTION = -1;
 	private String difficult = "";
 	private OnClickListener onClickChoice = new OnClickListener() {
 		@Override
@@ -180,11 +183,17 @@ public class QuestionActivity extends Activity {
 		txtQuestion = (TextView) findViewById(R.id.txtQuestion);
 		txtAnswer = (TextView) findViewById(R.id.txtAnswer);
 		txtRemainingTime = (TextView) findViewById(R.id.txtRemainingTime);
-		
 		choiceA = (Button) findViewById(R.id.btnChoiceA);
 		choiceB = (Button) findViewById(R.id.btnChoiceB);
 		choiceC = (Button) findViewById(R.id.btnChoiceC);
 		choiceD = (Button) findViewById(R.id.btnChoiceD);
+		btnShowTrueAnswer = (Button) findViewById(R.id.btnShowAnswer);
+		btnShowTrueAnswer.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				showTrueAnswer();
+			}
+		});
 
 		// get difficult from parent activity (InGame), get Question and show to UI
 		difficult = getIntent().getExtras().getString(InGame.DIFFICULT);
@@ -201,28 +210,48 @@ public class QuestionActivity extends Activity {
 		// continue here ... 
 	}
 
+	public static void initExcludeList() {
+		exclude = new ArrayList<Integer>();
+	}
+	
 	private void fillData() {
 		// get question from database, and prevent this question appear again
 		quest = databaseCon.getRandomQuestion(difficult, exclude);
-		exclude.add(quest.getQid());
-
-		// show this question into UI
-		txtQuestion.setText("Q: "+quest.getQuestion());
-		txtAnswer.setText(""+quest.getAnswerID());
-		String[] choices = quest.getChoiceList(); 
-		choiceA.setText("A "+choices[0]);
-		choiceB.setText("B "+choices[1]);
-		choiceC.setText("C "+choices[2]);
-		choiceD.setText("D "+choices[3]);
+		
+		// test 
+		System.out.println("qid = "+quest.getQid());
+		
+		if (quest.getQid()>Question.BLANK_QUESTION) {
+			// prevent duplicate question
+			exclude.add(quest.getQid());
+			
+			// show this question into UI
+			txtQuestion.setText("Question:\n" + quest.getQuestion());
+			String[] choices = quest.getChoiceList();
+			choiceA.setText(choices[0]);
+			choiceB.setText(choices[1]);
+			choiceC.setText(choices[2]);
+			choiceD.setText(choices[3]);
+		} else {
+			sendResultBack(RUNOUT_OF_QUESTION);
+		}
 	}
 
-	private void sendResultBack(int choiceNum) {
+	private void showTrueAnswer() {
+		txtAnswer.setText("" + quest.getAnswerID());
+	}
+
+	private void sendResultBack(int resultCode) {
 		// transfer quest result to parent activity (InGame)
 		Intent intent = new Intent();
-		if (choiceNum==WRONG_CHOICE) {
+		if (resultCode==WRONG_CHOICE) {
 			intent.putExtra(InGame.ANSWER, false);
+			intent.putExtra(InGame.QUEST, quest.getQid());
+		}else if (resultCode==RUNOUT_OF_QUESTION){
+			intent.putExtra(InGame.QUEST, RUNOUT_OF_QUESTION);
 		}else {
-			intent.putExtra(InGame.ANSWER, choiceNum==quest.getAnswerID());
+			intent.putExtra(InGame.ANSWER, resultCode==quest.getAnswerID());
+			intent.putExtra(InGame.QUEST, quest.getQid());
 		}
 		setResult(InGame.RESULT_CODE, intent);
 		finish();

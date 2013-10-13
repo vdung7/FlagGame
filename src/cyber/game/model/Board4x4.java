@@ -35,7 +35,7 @@ public class Board4x4 {
 
 	public boolean checkNoMoreMoveState(int moveCount){
 		boolean noMoreMove = moveCount==Board4x4.DIMENSON*Board4x4.DIMENSON;
-		boolean noMoreMove_withAlockedCell = moveCount== (Board4x4.DIMENSON*Board4x4.DIMENSON-1) 
+		boolean noMoreMove_withAlockedCell = moveCount==(Board4x4.DIMENSON*Board4x4.DIMENSON-1) 
 												&& isHaveAlockedCell();
 		return noMoreMove || noMoreMove_withAlockedCell;
 	}
